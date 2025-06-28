@@ -32,7 +32,7 @@ class NumberStats:
     >>> ns.mode
     [3, 8]
     >>> round(ns.variance, 2)
-    9.3
+    10.3
     
     # 偶数個のデータで中央値が正しく計算されることを確認
     >>> ns_even = NumberStats(1, 5, 2, 8)

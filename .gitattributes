@@ -1,2 +1,1 @@
-# すべてのテキストファイルの改行コードを自動でLFに正規化する
-* text=auto eol=lf
+"*.py text eol=lf" 
