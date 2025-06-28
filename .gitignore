@@ -1,0 +1,29 @@
+# ---- Python ----
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+.Python
+
+# 仮想環境（名称は venv, env, .venv など任意）
+venv/
+.env/
+.venv/
+
+# Jupyter Notebook の自動チェックポイント
+.ipynb_checkpoints/
+
+# テスト出力
+htmlcov/
+.coverage
+.cache/
+pytest_cache/
+
+# ---- VS Code ----
+.vscode/
+
+# ---- OS・ツール共通 ----
+.DS_Store
+Thumbs.db
+*.log
