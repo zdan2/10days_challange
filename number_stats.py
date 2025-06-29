@@ -27,6 +27,7 @@ class NumberStats:
     5
     >>> ns.mean
     6.4
+    
     >>> ns.median
     8
     >>> ns.mode
@@ -37,7 +38,7 @@ class NumberStats:
     # 偶数個のデータで中央値が正しく計算されることを確認
     >>> ns_even = NumberStats(1, 5, 2, 8)
     >>> ns_even.median
-    3.5
+    2
     """
 
     def __init__(self, *values: float | int):
@@ -64,15 +65,8 @@ class NumberStats:
 
     @cached_property_custom
     def median(self) -> float | int:
-        """中央値を返します。"""
-        n = self.size
-        center_index = n // 2
-        if n % 2 == 1:
-            # データ数が奇数の場合
-            return self._sorted[center_index]
-        else:
-            # データ数が偶数の場合、中央の2つの値の平均
-            return (self._sorted[center_index - 1] + self._sorted[center_index]) / 2
+        # 下位中央値
+        return self._sorted[(self.size - 1) // 2]
 
     @cached_property_custom
     def mode(self) -> list[float | int]:
@@ -115,7 +109,16 @@ class NumberStats:
     def __repr__(self) -> str:
         """オブジェクトの文字列表現を返します。"""
         return f"<NumberStats size={self.size} mean={self.mean:.3g}>"
+
+def main():
+    ns = NumberStats(10, 8, 3, 3, 8)
+    print(ns.size)
+    print(ns.mean)
+    print(ns.median)
+    print(ns.mode)
+    s=NumberStats(1,2,3,4,5,6,7,8,9,10,1,1,1,1,10,10,10,10,10,10)
+    print(s)
+    print(s.size)
     
-s=NumberStats(1,2,3,4,5,6,7,8,9,10,1,1,1,1,10,10,10,10,10,10)
-print(s)
-print(s.size)
+if __name__ == "__main__":
+    main()
