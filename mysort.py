@@ -24,4 +24,4 @@ def quick_sort(arr):
 [1, 2, 3, 5, 6, 7, 8, 9]
 '''
 print(selection_sort([3,1,4]))           
-print(quick_sort([3,1,4]))          
+print(quick_sort([3,1,4]))
