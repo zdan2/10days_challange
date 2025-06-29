@@ -2,7 +2,7 @@ from timeit import timeit
 from random import randrange
 import sys
 #sys.setrecursionlimit(10**9)
-def selection_sort(arr):
+def selection_sort(arr: list[int]) -> list[int]:
     """
     >>> selection_sort([3, 1, 4])
     [1, 3, 4]
@@ -16,7 +16,7 @@ def selection_sort(arr):
         a[i],a[min_idx]=a[min_idx],a[i]
     return a
 
-def quick_sort(arr):
+def quick_sort(arr: list[int]) -> list[int]:
     """
     >>> quick_sort([3, 1, 4])
     [1, 3, 4]

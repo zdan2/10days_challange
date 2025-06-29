@@ -1,31 +1,79 @@
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from collections import defaultdict
 import json
 
-# ID生成はシンプルにクラス変数で管理する方法もあります
+# --- クラス定義 ---
+# dataclassはクラスの外で定義するのが一般的です
+
+@dataclass
+class BlogPost:
+    """
+    基底クラス。ここではデフォルト値を持たない共通フィールドのみを定義するのが安全。
+    """
+    id: int
+    title: str
+    content_type: str
+    # tagsはここから削除し、各子クラスで定義する
+
+@dataclass
+class Article(BlogPost):
+    """「記事」クラス"""
+    # 最初に、このクラス固有の「デフォルト値なし」フィールドを定義
+    content: str
+    
+    # 次に、「デフォルト値あり」のフィールドを定義
+    tags: set[str] = field(default_factory=set)
+    
+    def display(self):
+        """記事の内容を整形して表示"""
+        print(f"\n--- 記事詳細 (ID: {self.id}) ---")
+        print(f"Title: {self.title}")
+        print(f"Content: {self.content}")
+        print(f"Tags: {', '.join(self.tags) if self.tags else 'なし'}")
+        print("--------------------------\n")
+
+@dataclass
+class Memo(BlogPost):
+    """「メモ」クラス"""
+    # 最初に、このクラス固有の「デフォルト値なし」フィールドを定義
+    memo_body: str
+    
+    # 次に、「デフォルト値あり」のフィールドを定義
+    tags: set[str] = field(default_factory=set)
+    
+    def display(self):
+        """メモの内容を整形して表示"""
+        print(f"\n--- メモ詳細 (ID: {self.id}) ---")
+        print(f"Title: {self.title}")
+        print(f"Memo: {self.memo_body}")
+        print(f"Tags: {', '.join(self.tags) if self.tags else 'なし'}")
+        print("--------------------------\n")
+
 class BlogSystem:
     def __init__(self):
-        # --- ステップ1: 記事コンテナを辞書に変更 ---
         # {id: BlogPost_object} という形式で記事を保存
         self._posts = {}
-        
-        # --- ステップ1: 逆引きインデックスの値をsetに変更 ---
         # {tag_name: {id1, id2, ...}} という形式
         self._tag_index = defaultdict(set)
-        
         # 次に割り振るID
         self._next_id = 1
 
-    def post(self, title, content, tags, contnt_type):
-        """新しい記事を投稿する"""
+    def post(self, title, body, tags, content_type):
+        """新しい記事またはメモを投稿する"""
         post_id = self._next_id
-    
-        # tagsは文字列のセットとして扱う
         tags_set = set(tags)
         
-        new_post = BlogPost(id=post_id, title=title, content=content, tags=tags_set, contnt_type=content_type)
-        
+        new_post = None
+        # content_typeに応じて、適切なクラスのインスタンスを生成
+        if content_type == "article":
+            new_post = Article(id=post_id, title=title, content=body, tags=tags_set, content_type=content_type)
+        elif content_type == "memo":
+            new_post = Memo(id=post_id, title=title, memo_body=body, tags=tags_set, content_type=content_type)
+        else:
+            print(f"エラー: 不明なコンテンツタイプ '{content_type}' です。")
+            return None
+
         self._posts[post_id] = new_post
         
         # 逆引きインデックスを更新
@@ -44,40 +92,31 @@ class BlogSystem:
         
         print("\n--- 記事一覧 ---")
         for post in self._posts.values():
-            print(f"ID: {post.id: <3} | Title: {post.title}")
+            print(f"ID: {post.id: <3} | Type: {post.content_type: <7} | Title: {post.title}")
         print("----------------\n")
 
     def view(self, post_id):
-        """IDで指定した記事を表示する"""
-        # --- ステップ1: 辞書なのでO(1)で高速にアクセス ---
+        """IDで指定した記事/メモの詳細を表示する"""
         post = self._posts.get(post_id)
         if post:
-            print(f"\n---記事詳細 (ID: {post.id})---")
-            print(f"Title: {post.title}")
-            print(f"Content: {post.content}")
-            # setをカンマ区切りの文字列に変換して表示
-            print(f"Tags: {', '.join(post.tags)}")
-            print("--------------------------\n")
+            # 各オブジェクトが持つdisplayメソッドを呼び出す（ポリモーフィズム）
+            post.display()
         else:
             print(f"エラー: ID {post_id} の記事は見つかりませんでした。")
 
     def search_by_tag(self, tag):
-        """タグで記事を検索する（高速な逆引きインデックスを使用）"""
+        """タグで記事を検索する"""
         print(f"\n--- タグ '{tag}' の検索結果 ---")
-        
-        # --- ステップ1: 建設した高速道路を走る！ ---
         post_ids = self._tag_index.get(tag)
         
         if not post_ids:
             print("このタグを持つ記事はありません。")
             return
         
-        for post_id in post_ids:
-            post = self._posts[post_id] # IDが分かっているので、ここも高速
-            print(f"ID: {post.id: <3} | Title: {post.title}")
+        for post_id in sorted(list(post_ids)): # ID順で表示されるようにソート
+            post = self._posts[post_id]
+            print(f"ID: {post.id: <3} | Type: {post.content_type: <7} | Title: {post.title}")
         print("---------------------------\n")
-        
-# from dataclasses import asdict # こちらを使うと、より簡潔になります
 
     def save(self, filename):
         """記事をファイルに保存する（修正版）"""
@@ -109,74 +148,75 @@ class BlogSystem:
         print(f"データを {filename} に保存しました。")
     
     def load(self, filename):
-        """ファイルから記事を読み込む"""
+        """ファイルからデータを読み込む"""
         try:
-            with open(filename, 'r') as f:
+            with open(filename, 'r', encoding='utf-8') as f:
                 data = json.load(f)
 
-            # 辞書をBlogPostオブジェクトに変換
-            self._posts = {post['id']: BlogPost(**post) for post in data['posts']}
+            self._posts.clear() # 現在のデータをクリア
+
+            # 読み込んだ辞書から、正しい型のオブジェクトを復元する
+            for post_data in data['posts']:
+                content_type = post_data.get('content_type')
+                # JSONから読み込んだtags(list)をsetに変換
+                post_data['tags'] = set(post_data.get('tags', []))
+
+                post_obj = None
+                if content_type == 'article':
+                    post_obj = Article(**post_data)
+                elif content_type == 'memo':
+                    post_obj = Memo(**post_data)
+                
+                if post_obj:
+                    self._posts[post_obj.id] = post_obj
+
             self._next_id = data['next_id']
-            self._tag_index = defaultdict(set, data['tag_index'])
+            
+            # JSONから読み込んだtag_indexのvalue(list)をsetに変換して復元
+            self._tag_index.clear()
+            loaded_tag_index = data.get('tag_index', {})
+            for tag, ids in loaded_tag_index.items():
+                self._tag_index[tag] = set(ids)
 
-            print(f"記事を {filename} から読み込みました。")
+            print(f"データを {filename} から読み込みました。")
+
         except FileNotFoundError:
-            print(f"エラー: {filename} が見つかりません。")
-        except json.JSONDecodeError:
-            print(f"エラー: {filename} のフォーマットが正しくありません。")
-
-
-# dataclassはクラスの外で定義するのが一般的です
-@dataclass# frozen=Trueにすると、作成後に内容を変更できなくなり、より安全になります
-class BlogPost:
-    id: int
-    title: str
-    tags: set[str]
-    content_type: str
-@dataclass
-class Articke(BlogPost):
-    content: str
-    
-    def display(self):
-        print(f"Title: {self.title}")
-        print(f"Content: {self.content}")
-        print(f"Tags: {', '.join(self.tags)}")
-
-@dataclass
-class Memo(BlogPost):
-    memo_body:str
-    def display(self):
-        print(f"Title: {self.title}")
-        print(f"Memo: {self.memo_body}")
-        print(f"Tags: {', '.join(self.tags)}")
+            print(f"情報: セーブファイル {filename} が見つかりませんでした。新しいファイルを作成します。")
+        except (json.JSONDecodeError, KeyError) as e:
+            print(f"エラー: {filename} のフォーマットが正しくないか、必要なデータがありません。 ({e})")
 
 def main():
     """メインの実行ループ"""
     system = BlogSystem()
-    print("ミニブログへようこそ！ (コマンド: post_artivle, post_memo, list, view <ID>, search <tag>, save, load, quit)")
+    system.load("blog_data.json") # 起動時に自動ロード
+    
+    print("\nミニブログへようこそ！")
+    print("コマンド: post_article, post_memo, list, view <ID>, search <tag>, save, load, quit")
     
     while True:
         try:
-            raw_input = input("> ").strip().split(maxsplit=1)
-            if not raw_input:
+            # Python 2のraw_inputはPython 3ではinput
+            user_input = input("> ").strip().split(maxsplit=1)
+            if not user_input:
                 continue
 
-            command = raw_input[0].lower()
-            args = raw_input[1] if len(raw_input) > 1 else ""
+            command = user_input[0].lower()
+            args = user_input[1] if len(user_input) > 1 else ""
 
             if command == "post_article":
                 title = input("   title: ")
                 content = input(" content: ")
                 tags_str = input("    tags (カンマ区切り): ")
-                tags = [tag.strip() for tag in tags_str.split(',')]
+                tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
                 system.post(title, content, tags, "article")
+
             elif command == "post_memo":
                 title = input("   title: ")
-                memo_body = input(" memo: ")
+                memo_body = input("    memo: ")
                 tags_str = input("    tags (カンマ区切り): ")
-                tags = [tag.strip() for tag in tags_str.split(',')]
+                tags = [tag.strip() for tag in tags_str.split(',') if tag.strip()]
                 system.post(title, memo_body, tags, "memo")
-                        
+            
             elif command == "list":
                 system.list_all()
                 
@@ -193,26 +233,24 @@ def main():
                 system.search_by_tag(args)
                 
             elif command == "save":
-                # ここでファイルに保存する処理を実装します
                 system.save("blog_data.json")
-                pass
             
             elif command == "load":
-                # ここでファイルから読み込む処理を実装します
                 system.load("blog_data.json")
-                pass
 
             elif command == "quit":
+                print("変更を保存しますか？ (yes/no)")
+                if input("> ").lower().strip() == 'yes':
+                    system.save("blog_data.json")
                 print("プログラムを終了します。")
                 break
             
             else:
                 print(f"エラー: '{command}' は不明なコマンドです。")
         
-        except (ValueError, IndexError) as e:
-            print(f"入力エラーが発生しました: {e}")
+        except ValueError:
+            print("エラー: IDには数値を入力してください。")
         except KeyboardInterrupt:
-            # Ctrl+Cが押されたときに綺麗に終了する
             print("\nプログラムを終了します。")
             sys.exit()
 
