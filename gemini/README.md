@@ -50,3 +50,25 @@
 まずはご自身で考えて、コードを書いてみてください。完璧でなくても全く問題ありません。大切なのは、自分の頭で考えて試行錯誤することです。
 
 コードが完成したら、ここに貼り付けてください。一緒にレビューして、より良いコードにするための改善点や新しいテクニックを学んでいきましょう。もし途中で行き詰まっても、遠慮なく質問してくださいね。応援しています！
+
+🧪 requests 練習課題（レベル別）
+🔰 初級編：GETリクエストでデータ取得
+httpbin.org/get にGETリクエストを送り、返ってきたJSONを整形表示する。
+
+https://jsonplaceholder.typicode.com/posts/1 からタイトルと本文だけを取り出す。
+
+https://catfact.ninja/fact から猫の豆知識を表示する。
+
+🧩 中級編：パラメータ付きリクエスト・POSTの送信
+httpbin.org/get に params={'name': 'Taro', 'lang': 'ja'} を付けて送信。
+
+httpbin.org/post に json={"id":123,"message":"こんにちは"} を送ってレスポンスを表示。
+
+https://jsonplaceholder.typicode.com/posts にPOSTして、新しい投稿を作成してみる。
+
+🔐 上級編：認証・エラーハンドリング・CRUD
+https://reqres.in/api/register にPOSTしてユーザー登録（失敗ケースも試す）。
+
+https://reqres.in/api/users/2 にDELETEリクエストを送ってユーザー削除。
+
+タイムアウトの設定や404エラー発生時のハンドリングを書く。
